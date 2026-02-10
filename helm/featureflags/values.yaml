@@ -1,0 +1,147 @@
+# Default values for featureflags
+
+replicaCount: 2
+
+image:
+  repository: featureflags
+  pullPolicy: Never
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 8080
+  nodePort: 30080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: featureflags.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: featureflags-tls
+  #    hosts:
+  #      - featureflags.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Application configuration
+config:
+  port: "8080"
+  logLevel: "info"
+
+# Environment variables from ConfigMap
+env: {}
+  # EXAMPLE_VAR: "value"
+
+# Environment variables from Secrets
+envFromSecrets: []
+  # - name: postgres-credentials
+  #   key: DATABASE_URL
+  #   envName: DATABASE_URL
+
+# External secrets (for AWS Secrets Manager, etc.)
+externalSecrets:
+  enabled: false
+  refreshInterval: "1h"
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+
+# Database configuration
+database:
+  host: ""
+  port: "5432"
+  name: "featureflags"
+  sslMode: "require"
+  # Credentials should be provided via secrets
+  existingSecret: ""
+  usernameKey: "username"
+  passwordKey: "password"
+
+# Redis configuration
+redis:
+  host: ""
+  port: "6379"
+  # Credentials should be provided via secrets
+  existingSecret: ""
+  passwordKey: "password"
+
+# Google OAuth configuration
+google:
+  clientId: ""
+  existingSecret: ""
+  clientIdKey: "client-id"
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
